@@ -78,7 +78,7 @@ public class SkillingOutfitPlugin extends Plugin
 			"You start cracking the safe\\."
 	);
 
-	// ===== Startup =====
+		// ===== Startup =====
 	@Override
 	protected void startUp()
 	{
@@ -86,42 +86,39 @@ public class SkillingOutfitPlugin extends Plugin
 
 		configManager.setConfiguration("skillingoutfit", "enablePopoutConfigMode", "false");
 
-		BufferedImage icon = resizeIcon(itemManager.getImage(24554, 1, true), 16, 16);
+		// FIX: Load icon on client thread AFTER cache is ready
+		clientThread.invokeLater(() ->
+		{
+			BufferedImage icon = itemManager.getImage(22327);
 
-		navButton = NavigationButton.builder()
-				.tooltip("Skilling Outfit Tracker")
-				.icon(icon)
-				.priority(1)
-				.panel(panel)
-				.build();
+			navButton = NavigationButton.builder()
+					.tooltip("Skilling Outfit Tracker")
+					.icon(icon)
+					.panel(panel)
+					.priority(10)
+					.build();
 
-		clientToolbar.addNavigation(navButton);
+			clientToolbar.addNavigation(navButton);
+		});
 
-		clientThread.invokeLater(() -> {
-			// 1️⃣ Load previously obtained items
+		// Keep the rest of your startup logic exactly the same
+		clientThread.invokeLater(() ->
+		{
 			tracker.loadObtainedItems();
-
-			// 2️⃣ Load saved bank cache from config
 			tracker.loadBankCache();
-
-			// 3️⃣ Update inventory and equipment caches
 			tracker.updateInventoryCache();
 			tracker.updateEquipmentCache();
-
-			// 4️⃣ Update bank cache from live bank if open
 			tracker.updateBankCache();
 
-			// 5️⃣ Merge caches into obtained items
-			clientThread.invokeLater(() -> {
-				tracker.updateOwnedItemsFromCaches();  // includes bankCacheSnapshot
-				tracker.updateOwnedItems();            // refresh UI cache
-				tracker.saveObtainedItems();           // persist changes
+			clientThread.invokeLater(() ->
+			{
+				tracker.updateOwnedItemsFromCaches();
+				tracker.updateOwnedItems();
+				tracker.saveObtainedItems();
 				safeUpdatePanel(panel::updateAllCaches);
 			});
 		});
 
-
-		// Load minigame stats
 		loadMinigameStat("mahoganyContracts", tracker::setCarpenterContracts, 0);
 		loadMinigameStat("mahoganyPoints", tracker::setCarpenterPoints, 0);
 		loadMinigameStat("farmingPoints", tracker::setFarmingPoints, 0);
@@ -369,4 +366,5 @@ public class SkillingOutfitPlugin extends Plugin
 		return false;
 	}
 }
+
 
