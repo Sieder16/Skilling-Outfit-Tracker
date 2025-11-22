@@ -188,9 +188,6 @@ public class SkillingOutfitPlugin extends Plugin
 
 			// Print to in-game chat
 			client.addChatMessage(ChatMessageType.GAMEMESSAGE, "[SOT]", "Added " + bark + " Anima Bark To Total", null);
-
-			// Print to console / system
-			System.out.println("[SOT] Added " + bark + " Anima Bark To Total (New Total: " + newTotal + ")");
 		}, null)) return;
 
 		// Rogues' Den - Safe Attempts
@@ -372,3 +369,4 @@ public class SkillingOutfitPlugin extends Plugin
 		return false;
 	}
 }
+
