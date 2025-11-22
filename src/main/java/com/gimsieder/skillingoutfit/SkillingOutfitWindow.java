@@ -1,3 +1,4 @@
+
 package com.gimsieder.skillingoutfit;
 
 import net.runelite.client.callback.ClientThread;
@@ -12,131 +13,247 @@ import java.util.Map;
 
 public class SkillingOutfitWindow extends JFrame
 {
-    private final SkillingOutfitConfig config;
-    private final SkillingOutfitPanel panel;
-    private final ConfigManager configManager;
-    private final EventBus eventBus;
-    private final ClientThread clientThread;
+	private final SkillingOutfitConfig config;
+	private final SkillingOutfitPanel panel;
+	private final ConfigManager configManager;
+	private final EventBus eventBus;
 
-    public SkillingOutfitWindow(SkillingOutfitConfig config, SkillingOutfitPanel panel,
-                                ConfigManager configManager, EventBus eventBus, ClientThread clientThread)
-    {
-        super("Skilling Outfit Tracker - Config");
-        this.config = config;
-        this.panel = panel;
-        this.configManager = configManager;
-        this.eventBus = eventBus;
-        this.clientThread = clientThread;
+	private static final int FIXED_WIDTH = 440;
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
-        setSize(420, 720);
-        setLocationRelativeTo(null);
+	public SkillingOutfitWindow(
+			SkillingOutfitConfig config,
+			SkillingOutfitPanel panel,
+			ConfigManager configManager,
+			EventBus eventBus,
+			ClientThread clientThread
+	)
+	{
+		super("Skilling Outfit Tracker – Config");
+		this.config = config;
+		this.panel = panel;
+		this.configManager = configManager;
+		this.eventBus = eventBus;
 
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setSize(500, 700);
+		setLocationRelativeTo(null);
 
-        content.add(sectionLabel("General Display Settings"));
+		JPanel main = createVerticalPanel();
+		leftAlign(main);
 
-        addCheckBox(content, "Notify on new item", "notifyOnNew", config.notifyOnNew());
-        addSpinner(content, "Panel Title Spacer", "panelTitleSpacer", config.panelTitleSpacer(), 0, 100, 1);
-        addCheckBox(content, "Display Collected Outfits", "displayCollectedOutfits", config.displayCollectedOutfits());
-        addSpinner(content, "Outfit Text Spacer", "outfitTextSpacer", config.outfitTextSpacer(), 0, 50, 1);
-        addCheckBox(content, "Display Collected Items", "displayCollectedItems", config.displayCollectedItems());
-        addSpinner(content, "Item Text Spacer", "itemTextSpacer", config.itemTextSpacer(), 0, 50, 1);
-        addCheckBox(content, "Color Text for Collected", "colorTextForCollected", config.colorTextForCollected());
-        addSpinner(content, "First Outfit Spacer", "firstOutfitSpacer", config.firstOutfitSpacer(), 0, 50, 1);
-        addSpinner(content, "Total Needed Text Spacer", "totalNeededTextSpacer", config.totalNeededTextSpacer(), 0, 50, 1);
-        addSpinner(content, "Icon Text Spacer", "iconTextSpacer", config.iconTextSpacer(), 0, 50, 1);
-        addSpinner(content, "Icon Size", "iconSize", config.iconSize(), 16, 128, 1);
-        addSpinner(content, "Icon Gap Spacing", "iconGapSpacing", config.iconGapSpacing(), 0, 50, 1);
-        addSpinner(content, "Max Columns", "maxCols", config.maxCols(), 1, 10, 1);
+		/* ======================================================
+		 *  GENERAL SETTINGS
+		 * ====================================================== */
+		addHeader(main, "General Settings");
 
-        addCheckBox(content, "Show Obtained Items", "showObtainedItems", config.showObtainedItems());
-        addCheckBox(content, "Override Outfit Colors", "overrideOutfitColors", config.overrideOutfitColors());
+		addCheckbox(main, "Display Collected Outfits", "displayCollectedOutfits", config.displayCollectedOutfits());
+		addCheckbox(main, "Display Collected Items", "displayCollectedItems", config.displayCollectedItems());
+		addCheckbox(main, "Color Text For Collected", "colorTextForCollected", config.colorTextForCollected());
 
-        JButton colorButton = new JButton("Pick Outfit Name Color");
-        colorButton.addActionListener(e -> {
-            Color newColor = JColorChooser.showDialog(this, "Choose Outfit Name Color", config.outfitNameColor());
-            if (newColor != null)
-                setConfigValue("outfitNameColor", newColor.getRGB());
-        });
-        content.add(colorButton);
+		addCheckbox(main, "Show Price To Obtain (Outfit)", "showTotalObtain", config.showTotalObtain());
+		addCheckbox(main, "Show Price To Obtain (Items)", "showItemTotalObtain", config.showItemTotalObtain());
+		addCheckbox(main, "Show Obtained Items", "showObtainedItems", config.showObtainedItems());
 
-        addCheckBox(content, "Enable Popout Config Mode", "enablePopoutConfigMode", config.enablePopoutConfigMode());
+		addCheckbox(main, "Enable Popout Config Mode", "enablePopoutConfigMode", config.enablePopoutConfigMode());
 
-        content.add(Box.createVerticalStrut(20));
-        content.add(sectionLabel("Outfit Sets"));
+		JLabel barkLabel = new JLabel("Anima-Infused Bark");
+		leftAlign(barkLabel);
+		main.add(barkLabel);
+		main.add(space());
 
-        Map<String, Boolean> outfits = new LinkedHashMap<>();
-        outfits.put("displayAgility", config.displayAgility());
-        outfits.put("displayConstruction", config.displayConstruction());
-        outfits.put("displayFarming", config.displayFarming());
-        outfits.put("displayFiremaking", config.displayFiremaking());
-        outfits.put("displayFishing", config.displayFishing());
-        outfits.put("displayHunter", config.displayHunter());
-        outfits.put("displayMining", config.displayMining());
-        outfits.put("displayPrayer", config.displayPrayer());
-        outfits.put("displayRunecraft", config.displayRunecraft());
-        outfits.put("displaySmithing", config.displaySmithing());
-        outfits.put("displayThieving", config.displayThieving());
-        outfits.put("displayWoodcutting", config.displayWoodcutting());
+		// Spinner
+		JPanel barkRow = new JPanel();
+		barkRow.setLayout(new BoxLayout(barkRow, BoxLayout.X_AXIS));
+		barkRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        outfits.forEach((key, value) -> {
-            String label = key.replace("display", "").replaceAll("([A-Z])", " $1").trim();
-            addCheckBox(content, "Display " + label + " Outfit", key, value);
-        });
+		// the spinner
+		JSpinner bark = new JSpinner(new SpinnerNumberModel(config.animaBark(), 0, 999999, 1));
+		bark.setPreferredSize(new Dimension(80, 25));
+		bark.setMaximumSize(new Dimension(80, 25));
+		bark.setMinimumSize(new Dimension(80, 25));
+		leftAlign(bark);
 
-        content.add(Box.createVerticalGlue());
+		bark.addChangeListener(e -> setConfigValue("animaBark", bark.getValue()));
 
-        JScrollPane scrollPane = new JScrollPane(content);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        add(scrollPane, BorderLayout.CENTER);
+		barkRow.add(bark);
+		main.add(barkRow);
+		main.add(space());
 
-        setVisible(true);
-    }
 
-    private void addCheckBox(JPanel panel, String label, String key, boolean initial)
-    {
-        JCheckBox box = new JCheckBox(label, initial);
-        box.addActionListener(e -> setConfigValue(key, box.isSelected()));
-        panel.add(box);
-    }
+		/* ======================================================
+		 *  SPACING SETTINGS
+		 * ====================================================== */
+		addHeader(main, "Spacing Settings");
 
-    private void addSpinner(JPanel panel, String label, String key, int value, int min, int max, int step)
-    {
-        JLabel l = new JLabel(label);
-        JSpinner spinner = new JSpinner(new SpinnerNumberModel(value, min, max, step));
-        spinner.addChangeListener(e -> setConfigValue(key, spinner.getValue()));
-        panel.add(l);
-        panel.add(spinner);
-    }
+		addSpinner(main, "Panel Title Spacer", "panelTitleSpacer", config.panelTitleSpacer(), 0, 200);
+		addSpinner(main, "Outfit Text Spacer", "outfitTextSpacer", config.outfitTextSpacer(), 0, 100);
+		addSpinner(main, "Item Text Spacer", "itemTextSpacer", config.itemTextSpacer(), 0, 100);
+		addSpinner(main, "First Outfit Spacer", "firstOutfitSpacer", config.firstOutfitSpacer(), 0, 100);
+		addSpinner(main, "Total Needed Text Spacer", "totalNeededTextSpacer", config.totalNeededTextSpacer(), 0, 100);
+		addSpinner(main, "Icon Text Spacer", "iconTextSpacer", config.iconTextSpacer(), 0, 100);
 
-    private JLabel sectionLabel(String text)
-    {
-        JLabel label = new JLabel(text);
-        label.setFont(label.getFont().deriveFont(Font.BOLD, 14f));
-        label.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));
-        return label;
-    }
+		/* ======================================================
+		 *  ICON SETTINGS
+		 * ====================================================== */
+		addHeader(main, "Icon Settings");
 
-    private void setConfigValue(String key, Object value)
-    {
-        configManager.setConfiguration("skillingoutfit", key, value);
-        if (panel != null)
-            panel.refresh();
+		addSpinner(main, "Icon Size", "iconSize", config.iconSize(), 16, 128);
+		addSpinner(main, "Icon Gap Spacing", "iconGapSpacing", config.iconGapSpacing(), 0, 100);
+		addSpinner(main, "Max Columns", "maxCols", config.maxCols(), 1, 12);
 
-        ConfigChanged changed = new ConfigChanged();
-        changed.setGroup("skillingoutfit");
-        changed.setKey(key);
-        changed.setNewValue(value != null ? value.toString() : null);
-        eventBus.post(changed);
-    }
+		/* ======================================================
+		 *  COLOR OPTIONS
+		 * ====================================================== */
+		addHeader(main, "Color Options");
 
-    private boolean getBooleanConfigValue(String key)
-    {
-        Object val = configManager.getConfiguration("skillingoutfit", key);
-        return val == null || Boolean.parseBoolean(val.toString());
-    }
+		addCheckbox(main, "Override Outfit Colors", "overrideOutfitColors", config.overrideOutfitColors());
 
+		JButton pick = new JButton("Pick Outfit Name Color");
+		leftAlign(pick);
+		pick.setMaximumSize(new Dimension(180, 28));
+		pick.setPreferredSize(new Dimension(180, 28));
+		pick.setMinimumSize(new Dimension(120, 28));
+		pick.addActionListener(e ->
+		{
+			Color newColor = JColorChooser.showDialog(this, "Choose Outfit Name Color", config.outfitNameColor());
+			if (newColor != null)
+				setConfigValue("outfitNameColor", newColor.getRGB());
+		});
+		main.add(pick);
+		main.add(space());
+
+		/* ======================================================
+		 *  OUTFIT SETS
+		 * ====================================================== */
+		addHeader(main, "Outfit Sets");
+
+		Map<String, Boolean> outfits = new LinkedHashMap<>();
+		outfits.put("Agility", config.displayAgility());
+		outfits.put("Construction", config.displayConstruction());
+		outfits.put("Farming", config.displayFarming());
+		outfits.put("Firemaking", config.displayFiremaking());
+		outfits.put("Fishing", config.displayFishing());
+		outfits.put("Hunter", config.displayHunter());
+		outfits.put("Mining", config.displayMining());
+		outfits.put("Prayer", config.displayPrayer());
+		outfits.put("Runecraft", config.displayRunecraft());
+		outfits.put("Smithing", config.displaySmithing());
+		outfits.put("Thieving", config.displayThieving());
+		outfits.put("Woodcutting", config.displayWoodcutting());
+
+		for (Map.Entry<String, Boolean> e : outfits.entrySet())
+			addCheckbox(main, "Display " + e.getKey() + " Outfit", "display" + e.getKey(), e.getValue());
+
+		/* ======================================================
+		 *  FIX COLLAPSING / LEFT-ALIGN WINDOW
+		 * ====================================================== */
+		main.setPreferredSize(new Dimension(FIXED_WIDTH, main.getPreferredSize().height));
+		main.setMinimumSize(new Dimension(FIXED_WIDTH, 0));
+		main.setMaximumSize(new Dimension(FIXED_WIDTH, Integer.MAX_VALUE));
+
+		JScrollPane scroll = new JScrollPane(main);
+		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.getVerticalScrollBar().setUnitIncrement(15);
+
+		add(scroll);
+		setVisible(true);
+	}
+
+	/* ======================================================
+	 *  HELPERS
+	 * ====================================================== */
+
+	private JPanel createVerticalPanel()
+	{
+		JPanel p = new JPanel();
+		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+		p.setAlignmentX(Component.LEFT_ALIGNMENT);
+		return p;
+	}
+
+	private void addHeader(JPanel p, String text)
+	{
+		JLabel header = new JLabel("  === " + text + " ===");
+		header.setFont(header.getFont().deriveFont(Font.BOLD, 13f));
+		fixComponent(header);
+		leftAlign(header);
+		p.add(header);
+		p.add(space());
+	}
+
+	private void addCheckbox(JPanel p, String label, String key, boolean initial)
+	{
+		JCheckBox box = new JCheckBox(label, initial);
+		fixComponent(box);
+		leftAlign(box);
+		box.addActionListener(e -> setConfigValue(key, box.isSelected()));
+		p.add(box);
+		p.add(space());
+	}
+
+	private void addSpinner(JPanel p, String label, String key, int initial, int min, int max)
+	{
+		JPanel row = new JPanel();
+		row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+		row.setAlignmentX(Component.LEFT_ALIGNMENT);
+		row.setMaximumSize(new Dimension(FIXED_WIDTH, 30));
+		row.setMinimumSize(new Dimension(FIXED_WIDTH, 30));
+		row.setPreferredSize(new Dimension(FIXED_WIDTH, 30));
+
+		JLabel l = new JLabel(label + ": ");
+		l.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		JSpinner spinner = new JSpinner(new SpinnerNumberModel(initial, min, max, 1));
+		spinner.setMaximumSize(new Dimension(80, 25));  // ❗ small spinner width
+		spinner.setPreferredSize(new Dimension(80, 25));
+		spinner.setMinimumSize(new Dimension(80, 25));
+		spinner.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+		spinner.addChangeListener(e -> setConfigValue(key, spinner.getValue()));
+
+		row.add(l);
+		row.add(Box.createHorizontalStrut(10)); // nice spacing
+		row.add(spinner);
+
+		p.add(row);
+		p.add(space());
+	}
+
+	private void fixComponent(Component c)
+	{
+		Dimension pref = c.getPreferredSize();
+		Dimension fixed = new Dimension(FIXED_WIDTH, pref.height);
+
+		c.setPreferredSize(fixed);
+		c.setMaximumSize(fixed);
+		c.setMinimumSize(new Dimension(FIXED_WIDTH, pref.height));
+	}
+
+	private void leftAlign(Component c)
+	{
+		if (c instanceof JComponent)
+			((JComponent) c).setAlignmentX(Component.LEFT_ALIGNMENT);
+	}
+
+	private Component space()
+	{
+		Component c = Box.createRigidArea(new Dimension(0, 10));
+		fixComponent(c);
+		leftAlign(c);
+		return c;
+	}
+
+	private void setConfigValue(String key, Object value)
+	{
+		configManager.setConfiguration("skillingoutfit", key, value);
+
+		if (panel != null)
+			panel.refresh();
+
+		ConfigChanged evt = new ConfigChanged();
+		evt.setGroup("skillingoutfit");
+		evt.setKey(key);
+		evt.setNewValue(value != null ? value.toString() : null);
+		eventBus.post(evt);
+	}
 }
