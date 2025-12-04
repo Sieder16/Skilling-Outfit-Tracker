@@ -210,18 +210,11 @@ public class SkillingOutfitPlugin extends Plugin
 				|| id == InventoryID.BANK.getId())
 		{
 			safeUpdatePanel(() -> {
+				tracker.updateAllCaches();
 				panel.updateAllCaches();
 				tracker.updateOwnedItemsFromCaches();
 			});
 		}
-	}
-
-	// ===== Game Tick Updates =====
-	@Subscribe
-	public void onGameTick(GameTick tick)
-	{
-		tracker.updateAllCaches();
-		safeUpdatePanel(panel::updateAllCaches);
 	}
 
 	@Subscribe
@@ -366,5 +359,6 @@ public class SkillingOutfitPlugin extends Plugin
 		return false;
 	}
 }
+
 
 
